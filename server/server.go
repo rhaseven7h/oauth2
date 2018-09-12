@@ -387,6 +387,8 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 	}
 
 	switch gt {
+	case oauth2.JSONWebTokenProfile:
+		ti, err = s.Manager.GenerateAccessToken(gt, tgr)
 	case oauth2.AuthorizationCode:
 		ati, verr := s.Manager.GenerateAccessToken(gt, tgr)
 		if verr != nil {

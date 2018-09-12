@@ -1,8 +1,10 @@
 package manage
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/generates"
@@ -260,6 +262,21 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return
+	} else if gt == oauth2.JSONWebTokenProfile {
+		jwtToken, jwtErr := jwt.Parse(tgr.ClientSecret, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			mySecret := cli.GetSecret()
+			return []byte(mySecret), nil
+		})
+		if jwtErr != nil {
+			return nil, jwtErr
+		}
+		if _, ok := jwtToken.Claims.(jwt.MapClaims); !ok || !jwtToken.Valid {
+			jwtErr = fmt.Errorf("invalid JWT token")
+			return nil, jwtErr
+		}
 	} else if tgr.ClientSecret != cli.GetSecret() {
 		err = errors.ErrInvalidClient
 		return

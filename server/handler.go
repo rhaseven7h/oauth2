@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 )
@@ -62,5 +63,33 @@ func ClientBasicHandler(r *http.Request) (clientID, clientSecret string, err err
 	}
 	clientID = username
 	clientSecret = password
+	return
+}
+
+func ClientJWTHandler(r *http.Request) (clientID, clientSecret string, err error) {
+	err = r.ParseForm()
+	if err != nil {
+		return
+	}
+	clientSecret = r.FormValue("assertion")
+
+	p := new(jwt.Parser)
+	token, _, err := p.ParseUnverified(clientSecret, jwt.MapClaims{})
+	if err != nil {
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		err = errors.ErrInvalidClient
+		return
+	}
+
+	clientID, ok = claims["sub"].(string)
+	if !ok {
+		err = errors.ErrInvalidClient
+		return
+	}
+
 	return
 }
