@@ -29,3 +29,7 @@ _testmain.go
 *.swp
 /example/client/client
 /example/server/server
+
+/vendor
+/Gopkg.lock
+/Gopkg.toml
